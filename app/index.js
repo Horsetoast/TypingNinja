@@ -4,37 +4,32 @@
 
 // Load application styles
 import 'styles/index.scss';
-import 'pixi.js';
+import Game from '@/classes/Game.js';
+
+const wordsList = {
+  1: ['在', '有', '個', '我', '不', '這', '人', '說', '要'],
+  2: []
+};
+
+const config = {
+  SPEED: 1,
+  CONTAINER_WORDS_OFFSET: 150
+};
+
+const game = new Game({
+  container: window,
+  wordsList,
+  config
+});
+
+const input = document.getElementById('words-input');
+game.bindInput(input);
+
+window.pauseGame = game.pauseGame.bind(game);
 
 // ================================
 // START YOUR APP HERE
 // ================================
-
-let demoText;
-let app;
-
-setupDemo();
-
-// Fullscreen in pixi is resizing the renderer to be window.innerWidth by window.innerHeight
-window.addEventListener('resize', function () {
-  app.renderer.resize(window.innerWidth, window.innerHeight);
-});
-
-// Create some text. Not important for fullscreen
-function setupDemo () {
-  app = new PIXI.Application(window.innerWidth, window.innerHeight, {
-    backgroundColor: 0x000000
-  });
-  document.body.querySelector('#game').appendChild(app.view);
-  // Create some text that we can update
-  // createText();
-  // Update the text every pixi frame or 'tick'
-  app.ticker.add(updateGame);
-}
-
-const updateGame = () => {
-
-};
 
 // // Demo-specific, replace or factor out
 // function createText () {
