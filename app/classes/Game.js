@@ -4,6 +4,7 @@ import Word from '@/classes/Word.js';
 export default class Game {
   constructor (settings = {}) {
     this.app = null;
+    this.score = 0;
     this.level = 1;
     this.words = [];
     this.input = null;
@@ -14,6 +15,13 @@ export default class Game {
     /* Attach resize listener */
     this.container.addEventListener('resize', () => {
       this.app.renderer.resize(this.container.innerWidth, this.container.innerHeight);
+    });
+
+    /* Attach pause game listener */
+    this.container.addEventListener('keyup', (e) => {
+      if (e.key === 'Escape') {
+        this.pauseGame();
+      }
     });
 
     /* Create PIXI Application and add canvas to container */
@@ -40,7 +48,8 @@ export default class Game {
   }
 
   nextWord () {
-    const gameSpeed = 5000 - (this.level * 100);
+    // this.spawnWord();
+    const gameSpeed = 4000;
     setTimeout(() => {
       this.spawnWord();
       this.nextWord();
@@ -90,10 +99,10 @@ export default class Game {
     const wordPosition = this.genarateWordPosition();
     const speed = this.genarateWordSpeed();
 
-    const wordEntity = new Word(word, {
+    const wordEntity = new Word(word, this.container, {
       x: wordPosition,
-      y: -100,
-      speed
+      initOffsetTop: -200,
+      score: this.level
     });
     console.log('Word spawned', word, wordPosition, speed);
     this.addEntity(wordEntity);
@@ -108,10 +117,27 @@ export default class Game {
       });
   }
 
-  checkWord (string) {
+  addScore (word) {
+    this.score += word.getScore();
+    // 1:10
+    // 2:30
+    // 3:60
+    // 4:100
+    let nextLevel = 0;
+    for (let i = 1; i <= this.level; i++) {
+      nextLevel += (i * 10);
+    }
+    console.log('Next level limit', nextLevel);
+    if (this.score > nextLevel) {
+      this.level += 1;
+    }
+  }
+
+  guessWord (string) {
     const word = this.words.find((w) => w.isWord(string));
     if (word) {
       this.destroyWord(word);
+      this.addScore(word);
       this.input.value = '';
     }
   }
@@ -122,7 +148,7 @@ export default class Game {
       e.preventDefault();
       console.log(e);
       if (e.key === 'Enter') {
-        this.checkWord(input.value);
+        this.guessWord(input.value);
       }
     });
   }
