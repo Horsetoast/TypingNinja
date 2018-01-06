@@ -3,7 +3,8 @@ import config from '@/config';
 import _ from 'lodash';
 
 export default class Word {
-  constructor (word = '', container, options = {}) {
+  constructor (word = {}, container, options = {}) {
+    this.guessed = false;
     this.spawnTime = window.performance.now();
     this.lifespan = options.lifespan || 10000;
     this.score = options.score || 1;
@@ -14,7 +15,9 @@ export default class Word {
       fontSize: '100px',
       fill: 'lightblue'
     };
-    this.text = new PIXI.Text(word, this.style);
+    // TODO: Support for simplified chinese
+    const chineseType = 'tr';
+    this.text = new PIXI.Text(word[chineseType], this.style);
     this.text.x = options.x || this.randomWordPosition();
     this.text.y = options.y || 0;
     this.initOffsetTop = options.initOffsetTop || 0;
@@ -38,8 +41,10 @@ export default class Word {
     return ((now - spawnTime) > lifespan);
   }
 
-  isWord (word) {
-    return word === this.word;
+  guess (string) {
+    return string === this.word['tr'] ||
+           string === this.word['si'] ||
+           this.word.pin.indexOf(string) !== -1;
   }
 
   getEntity () {
@@ -65,6 +70,7 @@ export default class Word {
   }
 
   explode () {
+    this.guessed = true;
     return new Promise((resolve, reject) => {
       this.text.style.fill = 'red';
       setTimeout(() => {

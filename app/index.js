@@ -5,15 +5,9 @@
 // Load application styles
 import 'styles/index.scss';
 import Game from '@/classes/Game.js';
+import wordsList from '@/wordsList.js';
 
-const wordsList = {
-  1: ['在', '有', '個', '我', '不', '這', '人', '說', '要', '大'],
-  2: ['本', '正', '想', '但', '她', '西', '的', '是', '了', '中'],
-  3: ['明', '已', '力', '文', '外', '高', '太', '手'],
-  4: ['些', '理', '把', '相', '民', '等', '第']
-};
-
-const game = new Game({
+const game = new Game('#game', {
   container: window,
   wordsList
 });

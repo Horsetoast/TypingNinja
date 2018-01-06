@@ -1,18 +1,21 @@
 import 'pixi.js';
 import Word from '@/classes/Word.js';
+import Scoreboard from '@/classes/Scoreboard.js';
 import config from '@/config';
 import _ from 'lodash';
 
 export default class Game {
-  constructor (settings = {}) {
+  constructor (divId, settings = {}) {
     this.app = null;
     this.score = 0;
     this.level = 1;
     this.words = [];
     this.input = null;
     this.paused = false;
+    this.scoreboard = null;
     this.container = settings.container;
     this.wordsList = settings.wordsList;
+    this.lastSpawn = null;
 
     /* Attach resize listener */
     this.container.addEventListener('resize', () => {
@@ -30,15 +33,22 @@ export default class Game {
     this.app = new PIXI.Application(this.container.innerWidth, this.container.innerHeight, {
       backgroundColor: 0x000000
     });
-    document.body.querySelector('#game').appendChild(this.app.view);
+    document.body.querySelector(divId).appendChild(this.app.view);
 
     /* Setup ticker with periodical update function */
     this.app.ticker.add(this.updateGame.bind(this));
 
+    this.createScoreBoard();
     this.nextWord();
   }
 
+  createScoreBoard () {
+    this.scoreboard = new Scoreboard('Score ', this.container);
+    this.app.stage.addChild(this.scoreboard.getEntity());
+  }
+
   updateGame () {
+    /* Check if a word fell through */
     this.words.forEach((word, index) => {
       word.update();
       if (word.isOut()) {
@@ -47,23 +57,33 @@ export default class Game {
         this.words.splice(index, 1);
       }
     });
+
+    /* Spawn new word */
+    this.nextWord();
+    /* Update position of scoreboard */
+    this.scoreboard.update();
   }
 
   nextWord () {
-    // this.spawnWord();
     const {level, wordsList} = this;
     const gameSpeed = this.convertToRange(
       level,
-      [1, _.size(wordsList)],
+      [0, _.size(wordsList)],
       [config.WORD_MAX_SPAWN_SPEED, config.WORD_MIN_SPAWN_SPEED]
     );
-    setTimeout(() => {
+
+    if (this.lastSpawn == null) {
+      this.lastSpawn = window.performance.now();
+    }
+
+    const now = window.performance.now();
+    if (now > (this.lastSpawn + gameSpeed)) {
       if (!this.paused) {
-        console.log('Game speed:', gameSpeed);
         this.spawnWord();
+        this.lastSpawn = window.performance.now();
+        console.log('Game speed:', gameSpeed, 'Level:', level);
       }
-      this.nextWord();
-    }, gameSpeed);
+    }
   }
 
   pauseGame () {
@@ -71,9 +91,9 @@ export default class Game {
     this.paused = true;
   }
 
-  addEntity (entity) {
-    this.words.push(entity);
-    this.app.stage.addChild(entity.getEntity());
+  addWord (word) {
+    this.words.push(word);
+    this.app.stage.addChild(word.getEntity());
   }
 
   getWordFromList () {
@@ -87,7 +107,7 @@ export default class Game {
 
     const lifespan = this.convertToRange(
       this.level,
-      [1, _.size(wordsList)],
+      [0, _.size(wordsList)],
       [config.WORD_MAX_LIFESPAN, config.WORD_MIN_LIFESPAN]
     );
 
@@ -96,11 +116,11 @@ export default class Game {
       lifespan,
       score: level
     });
-    this.addEntity(wordEntity);
+    this.addWord(wordEntity);
   }
 
   convertToRange (value, srcRange, dstRange) {
-    // value is outside source range return
+    /* If value is outside source range return NaN */
     if (value < srcRange[0] || value > srcRange[1]) {
       return NaN;
     }
@@ -123,18 +143,19 @@ export default class Game {
 
   addScore (word) {
     this.score += word.getScore();
+    this.scoreboard.updateScore(this.score);
     let nextLevel = 0;
     for (let i = 1; i <= this.level; i++) {
       nextLevel += (i * config.WORDS_PER_LEVEL);
     }
-    console.log('Next level limit:', nextLevel, 'Score:', this.score);
-    if (this.score >= nextLevel) {
+    const levelExists = !!this.wordsList[this.level + 1];
+    if (this.score >= nextLevel && levelExists) {
       this.level += 1;
     }
   }
 
   guessWord (string) {
-    const word = this.words.find((w) => w.isWord(string));
+    const word = this.words.find((w) => w.guessed === false && w.guess(string));
     if (word) {
       this.destroyWord(word);
       this.addScore(word);
