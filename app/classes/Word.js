@@ -1,8 +1,9 @@
 import 'pixi.js';
+import config from '@/config';
+import _ from 'lodash';
 
 export default class Word {
   constructor (word = '', container, options = {}) {
-    // this.speed = options.speed || 1;
     this.spawnTime = window.performance.now();
     this.lifespan = options.lifespan || 10000;
     this.score = options.score || 1;
@@ -14,33 +15,23 @@ export default class Word {
       fill: 'lightblue'
     };
     this.text = new PIXI.Text(word, this.style);
-    this.text.x = options.x || 0;
+    this.text.x = options.x || this.randomWordPosition();
     this.text.y = options.y || 0;
     this.initOffsetTop = options.initOffsetTop || 0;
+    console.log('Word spawned:', this.word, 'Lifespan:', this.lifespan);
     this.update();
   }
 
   update () {
-    // start 100 000
-    // end 110 000
-    // now 105 000
-    // 5000 / 10 000
-    // this.text.y += this.speed;
     const now = window.performance.now();
     const {text, container, initOffsetTop, spawnTime, lifespan} = this;
 
     const dy = now - spawnTime;
     const progress = dy / lifespan;
     text.y = (container.innerHeight - initOffsetTop) * progress + initOffsetTop;
-    console.log(progress);
   }
 
   isOut (width, height) {
-    // if (this.text.y > height) {
-    //   return true;
-    // } else {
-    //   return false;
-    // }
     const {spawnTime, lifespan} = this;
     const now = window.performance.now();
 
@@ -57,6 +48,20 @@ export default class Word {
 
   getScore () {
     return this.score;
+  }
+
+  randomWordPosition () {
+    const {CONTAINER_WORDS_OFFSET} = config;
+
+    const min = CONTAINER_WORDS_OFFSET;
+    const max = this.container.innerWidth - CONTAINER_WORDS_OFFSET;
+    let position = _.floor(Math.random() * this.container.innerWidth);
+    if (position < min) {
+      position += CONTAINER_WORDS_OFFSET;
+    } else if (position > max) {
+      position -= CONTAINER_WORDS_OFFSET;
+    }
+    return position;
   }
 
   explode () {

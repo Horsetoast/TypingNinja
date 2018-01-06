@@ -1,5 +1,7 @@
 import 'pixi.js';
 import Word from '@/classes/Word.js';
+import config from '@/config';
+import _ from 'lodash';
 
 export default class Game {
   constructor (settings = {}) {
@@ -8,9 +10,9 @@ export default class Game {
     this.level = 1;
     this.words = [];
     this.input = null;
+    this.paused = false;
     this.container = settings.container;
     this.wordsList = settings.wordsList;
-    this.config = settings.config;
 
     /* Attach resize listener */
     this.container.addEventListener('resize', () => {
@@ -39,7 +41,7 @@ export default class Game {
   updateGame () {
     this.words.forEach((word, index) => {
       word.update();
-      if (word.isOut(this.container.innerWidth, this.container.innerHeight)) {
+      if (word.isOut()) {
         console.log('OUT!!', index);
         this.app.stage.removeChild(word.getEntity());
         this.words.splice(index, 1);
@@ -49,15 +51,24 @@ export default class Game {
 
   nextWord () {
     // this.spawnWord();
-    const gameSpeed = 4000;
+    const {level, wordsList} = this;
+    const gameSpeed = this.convertToRange(
+      level,
+      [1, _.size(wordsList)],
+      [config.WORD_MAX_SPAWN_SPEED, config.WORD_MIN_SPAWN_SPEED]
+    );
     setTimeout(() => {
-      this.spawnWord();
+      if (!this.paused) {
+        console.log('Game speed:', gameSpeed);
+        this.spawnWord();
+      }
       this.nextWord();
     }, gameSpeed);
   }
 
   pauseGame () {
     this.app.ticker.stop();
+    this.paused = true;
   }
 
   addEntity (entity) {
@@ -67,51 +78,44 @@ export default class Game {
 
   getWordFromList () {
     const {wordsList, level} = this;
-    const levelWordsLength = wordsList[level].length;
-    const randIndex = Math.floor(Math.random() * levelWordsLength);
-    return wordsList[level][randIndex];
-  }
-
-  genarateWordPosition () {
-    const {CONTAINER_WORDS_OFFSET} = this.config;
-
-    const min = CONTAINER_WORDS_OFFSET;
-    const max = this.container.innerWidth - this.config.CONTAINER_WORDS_OFFSET;
-    let position = Math.floor(Math.random() * this.container.innerWidth);
-    if (position < min) {
-      position += CONTAINER_WORDS_OFFSET;
-    } else if (position > max) {
-      position -= CONTAINER_WORDS_OFFSET;
-    }
-    return position;
-  }
-
-  genarateWordSpeed () {
-    const {config, level} = this;
-    const randFactor = Math.random() - 0.5;
-    const modifier = 1 + level + randFactor;
-    const speed = config.SPEED - (config.SPEED / modifier);
-    return Math.round(speed * 100) / 100;
+    return _.sample(wordsList[level]);
   }
 
   spawnWord () {
+    const {level, wordsList} = this;
     const word = this.getWordFromList();
-    const wordPosition = this.genarateWordPosition();
-    const speed = this.genarateWordSpeed();
+
+    const lifespan = this.convertToRange(
+      this.level,
+      [1, _.size(wordsList)],
+      [config.WORD_MAX_LIFESPAN, config.WORD_MIN_LIFESPAN]
+    );
 
     const wordEntity = new Word(word, this.container, {
-      x: wordPosition,
       initOffsetTop: -200,
-      score: this.level
+      lifespan,
+      score: level
     });
-    console.log('Word spawned', word, wordPosition, speed);
     this.addEntity(wordEntity);
   }
 
+  convertToRange (value, srcRange, dstRange) {
+    // value is outside source range return
+    if (value < srcRange[0] || value > srcRange[1]) {
+      return NaN;
+    }
+
+    const srcMax = srcRange[1] - srcRange[0];
+    const dstMax = dstRange[1] - dstRange[0];
+    const adjValue = value - srcRange[0];
+
+    return (adjValue * dstMax / srcMax) + dstRange[0];
+  }
+
   destroyWord (word) {
-    const index = this.words.indexOf(word);
     word.explode()
       .then(() => {
+        const index = this.words.indexOf(word);
         this.words.splice(index, 1);
         this.app.stage.removeChild(word.getEntity());
       });
@@ -119,16 +123,12 @@ export default class Game {
 
   addScore (word) {
     this.score += word.getScore();
-    // 1:10
-    // 2:30
-    // 3:60
-    // 4:100
     let nextLevel = 0;
     for (let i = 1; i <= this.level; i++) {
-      nextLevel += (i * 10);
+      nextLevel += (i * config.WORDS_PER_LEVEL);
     }
-    console.log('Next level limit', nextLevel);
-    if (this.score > nextLevel) {
+    console.log('Next level limit:', nextLevel, 'Score:', this.score);
+    if (this.score >= nextLevel) {
       this.level += 1;
     }
   }
@@ -146,7 +146,6 @@ export default class Game {
     this.input = input;
     this.input.addEventListener('keyup', (e) => {
       e.preventDefault();
-      console.log(e);
       if (e.key === 'Enter') {
         this.guessWord(input.value);
       }

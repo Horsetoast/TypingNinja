@@ -13,15 +13,9 @@ const wordsList = {
   4: ['些', '理', '把', '相', '民', '等', '第']
 };
 
-const config = {
-  SPEED: 1,
-  CONTAINER_WORDS_OFFSET: 150
-};
-
 const game = new Game({
   container: window,
-  wordsList,
-  config
+  wordsList
 });
 
 const input = document.getElementById('words-input');
