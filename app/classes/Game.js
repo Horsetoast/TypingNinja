@@ -77,10 +77,10 @@ export default class Game {
     this.scoreboard.update();
 
     /* Setup ticker with periodical update function */
-    this.app.ticker.add(this.updateGame.bind(this));
+    this.app.ticker.add(this.update.bind(this));
   }
 
-  updateGame () {
+  update () {
     /* Check if game is over */
     if (this.gameOver) {
       this.app.ticker.stop();
