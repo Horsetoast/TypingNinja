@@ -1,5 +1,6 @@
 import 'pixi.js';
-import config from '@/config';
+import config from '@/config.js';
+import anime from 'animejs';
 import _ from 'lodash';
 
 export default class Word {
@@ -72,7 +73,7 @@ export default class Word {
   explode () {
     this.guessed = true;
     return new Promise((resolve, reject) => {
-      this.text.style.fill = 'red';
+      this.text.style.fill = 'green';
       setTimeout(() => {
         resolve();
       }, 300);

@@ -5,17 +5,34 @@
 // Load application styles
 import 'styles/index.scss';
 import Game from '@/classes/Game.js';
-import wordsList from '@/wordsList.js';
+import Scoreboard from '@/classes/Scoreboard';
 
-const game = new Game('#game', {
-  container: window,
-  wordsList
-});
+const gameWrapper = document.getElementById('game');
 
 const input = document.getElementById('words-input');
-game.bindInput(input);
 
-window.pauseGame = game.pauseGame.bind(game);
+const gameOverScreen = document.getElementById('game-over');
+
+const gameInit = document.getElementById('game-init');
+
+const gameControls = document.getElementById('game-controls');
+
+const game = new Game({
+  gameWrapper,
+  container: window,
+  input,
+  gameInit,
+  gameOverScreen,
+  gameControls
+});
+
+const scoreboard = new Scoreboard(game, {
+  text: 'Score ',
+  scoreDisplay: 'score',
+  livesDisplay: 'lives'
+});
+
+game.bindScoreboard(scoreboard);
 
 // ================================
 // START YOUR APP HERE

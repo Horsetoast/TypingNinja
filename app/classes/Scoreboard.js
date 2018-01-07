@@ -1,38 +1,42 @@
 import 'pixi.js';
-import config from '@/config';
+import config from '@/config.js';
 import _ from 'lodash';
 
 export default class Scoreboard {
-  constructor (text, container, options = {}) {
-    this.text = text || '';
-    this.score = 0;
-    this.container = container;
-    this.scoreText = new PIXI.Text(this.text + this.score, {
-      fontSize: 40,
-      fill: '#fff',
-      align: 'center'
-    });
-    this.scoreText.anchor.x = 0.5;
-    this.scoreText.anchor.y = 0.5;
-    this.update();
+  constructor (game, options = {}) {
+    this.game = game;
+    this.scoreDisplay = options.scoreDisplay;
+    this.livesDisplay = options.livesDisplay;
+    this.updateLives();
+    this.updateScore();
   }
 
   update () {
-    this.scoreText.x = this.container.innerWidth / 2;
-    this.scoreText.y = this.container.innerHeight * 0.85;
+    this.updateLives();
+    this.updateScore();
   }
 
-  addScore (score) {
-    this.score += score;
-    this.scoreText.text = this.text + this.score;
+  updateLives () {
+    const ld = document.querySelectorAll('[data-display="lives"]');
+
+    const life = document.createElement('span');
+    life.innerText = '❤';
+    life.className = 'heart';
+
+    for (let el of ld) {
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
+      _.times(this.game.lives, () => {
+        el.appendChild(life.cloneNode(true));
+      });
+    }
   }
 
-  updateScore (score) {
-    this.score = score;
-    this.scoreText.text = this.text + this.score;
-  }
-
-  getEntity () {
-    return this.scoreText;
+  updateScore () {
+    const sd = document.querySelectorAll('[data-display="score"]');
+    for (let el of sd) {
+      el.innerText = this.game.score;
+    }
   }
 };

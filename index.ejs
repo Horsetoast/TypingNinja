@@ -7,7 +7,36 @@
 </head>
 <body>
     <div id="game">
-        <input type="text" id="words-input" autofocus>
+        <div id="game-init">
+            <div>
+                <h1>Type words in Chinese or pinyin and score points</h1>
+                <p>It's that simple</p>
+                <button class="button" data-control="restart">I'm ready</button>
+            </div>
+        </div>
+        <div id="game-over" class="hidden">
+            <div>
+                <h1>Game over</h1>
+                <p>You scored <span id="game-over-score" data-display="score"></span> points</p>
+                <button class="button" data-control="restart">Restart</button>
+            </div>
+        </div>
+        <div id="game-controls">
+            <input type="text" id="words-input" autocomplete="off">
+            <div id="status-bar">
+                <span id="score">
+                    Score
+                    <span data-display="score"></span>
+                </span>
+                <span id="lifepoints" data-display="lives">
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                    <span class="heart">❤</span>
+                </span>
+            </div>
+        </div>
     </div>
 </body>
 </html>
