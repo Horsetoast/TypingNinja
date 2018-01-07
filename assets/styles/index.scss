@@ -84,25 +84,24 @@ body,
     justify-content: center;
     text-align: center;
     box-sizing: border-box;
+    padding: 0 35px;
     .button {
         margin-top: 20px;
     }
 }
 
 #game-over {
-    padding: 0 20px;
     background: rgba(0, 0, 0, 0.5);
     animation: fadein 1s;
     h1 {
         font-size: 40px;
         margin-bottom: 20px;
-        max-width: 300px;
+        max-width: 400px;
     }
 }
 
 #game-init {
     background: #000;
-    padding: 0 20px;
     p {
         margin: 30px 0 10px;
         color: silver;
@@ -110,14 +109,18 @@ body,
     h1 {
         line-height: 38px;
         font-size: 34px;
-        max-width: 300px;
+        max-width: 400px;
         margin-bottom: 20px;
     }
 }
 
 @media (max-width: 700px) {
     #game-controls {
+        #words-input {
+            width: 70%;
+        }
         #status-bar {
+            width: 70%;
             display: block;
             #score {
                 display: block;
