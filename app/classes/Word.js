@@ -21,6 +21,8 @@ export default class Word {
     this.text = new PIXI.Text(word[chineseType], this.style);
     this.text.x = options.x || this.randomWordPosition();
     this.text.y = options.y || 0;
+    this.text.anchor.x = 0.5;
+    this.text.anchor.y = 0.5;
     this.initOffsetTop = options.initOffsetTop || 0;
     console.log('Word spawned:', this.word, 'Lifespan:', this.lifespan);
     this.update();
@@ -43,9 +45,12 @@ export default class Word {
   }
 
   guess (string) {
+    const isPin = this.word.pin.some(pin => {
+      return pin.replace(/ /g, '') === string.replace(/ /g, '');
+    });
     return string === this.word['tr'] ||
            string === this.word['si'] ||
-           this.word.pin.indexOf(string) !== -1;
+           isPin;
   }
 
   getEntity () {
