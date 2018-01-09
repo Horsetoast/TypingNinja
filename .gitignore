@@ -7,6 +7,7 @@
 log/
 node_modules/
 bower_components/
+.vscode
 
 ## Files
 result.xml

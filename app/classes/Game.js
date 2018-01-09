@@ -7,6 +7,9 @@ import wordsList from '@/wordsList.js';
 import { colorGradientHelper, convertToRange } from '@/helpers.js';
 
 export default class Game {
+  /**
+   * @param {Object} settings Multiple HTML elements
+   */
   constructor (settings = {}) {
     this.app = null;
     this.score = 0;
@@ -15,9 +18,10 @@ export default class Game {
     this.gameOver = false;
     this.words = [];
     this.scoreboard = null;
-    this.paused = false;
     this.lastSpawn = null;
-    /* DOM elements */
+    this.deleteKey = 0;
+
+    /* HTML elements */
     this.gameWrapper = settings.gameWrapper;
     this.container = settings.container;
     this.input = settings.input;
@@ -30,58 +34,60 @@ export default class Game {
       this.app.renderer.resize(this.container.innerWidth, this.container.innerHeight);
     });
 
-    /* Attach pause game listener */
-    this.container.addEventListener('keyup', (e) => {
-      if (e.key === 'Escape') {
-        this.pauseGame();
-      }
-    });
-
     /* Attach listener to text input */
     this.input.addEventListener('keyup', (e) => {
       e.preventDefault();
       if (e.key === 'Enter') {
         this.guessWord(this.input.value);
       }
+      if (e.key === 'Backspace') {
+        this.inputDelete();
+      }
     });
 
     /* Attach restart to controls */
     const ra = document.querySelectorAll('[data-control="restart"]');
     for (let el of ra) {
-      el.addEventListener('click', this.restartGame.bind(this));
+      el.addEventListener('click', this.startNewGame.bind(this));
     }
 
-    /* Create PIXI Application and add canvas to container */
+    /* Create PIXI Application and append canvas */
     this.app = new PIXI.Application(this.container.innerWidth, this.container.innerHeight, {
       backgroundColor: 0x000000
     });
     this.gameWrapper.appendChild(this.app.view);
   }
 
-  restartGame () {
+  /**
+   * Resets values, removes words from PIXI stage object,
+   * start ticker and hide/show some HTML elements
+   */
+  startNewGame () {
     this.score = 0;
     this.level = 1;
     this.lives = config.LIVES;
     this.gameOver = false;
     this.words = [];
-    this.paused = false;
     this.lastSpawn = null;
     while (this.app.stage.children[0]) {
       this.app.stage.removeChild(this.app.stage.children[0]);
     }
     this.app.ticker.start();
+    this.input.value = '';
     this.input.focus();
     this.gameInit.classList.add('hidden');
     this.gameOverScreen.classList.add('hidden');
     this.gameControls.classList.remove('hidden');
     this.scoreboard.update();
 
-    /* Setup ticker with periodical update function */
     this.app.ticker.add(this.update.bind(this));
   }
 
+  /**
+   * Check if the game is over,
+   * if not, update words and spawn new
+   */
   update () {
-    /* Check if game is over */
     if (this.gameOver) {
       this.app.ticker.stop();
       this.gameOverScreen.classList.remove('hidden');
@@ -90,15 +96,16 @@ export default class Game {
     }
 
     this.updateWords();
-
-    /* Spawn new word */
     this.nextWord();
   }
 
+  /**
+   * Update Words positions and
+   * check if they're out
+   */
   updateWords () {
     this.words.forEach((word, index) => {
       word.update();
-      /* Check if a word fell through */
       if (word.isOut()) {
         this.loseLife();
         this.app.stage.removeChild(word.getEntity());
@@ -116,6 +123,9 @@ export default class Game {
     this.bleedAnimation();
   }
 
+  /**
+   * Background color animation
+   */
   bleedAnimation () {
     const ba = anime({
       duration: 100,
@@ -138,6 +148,9 @@ export default class Game {
     });
   }
 
+  /**
+   * Animation when you type a wrong word
+   */
   shakeAnimation () {
     this.gameWrapper.classList.add('shake');
     setTimeout(() => {
@@ -145,6 +158,23 @@ export default class Game {
     }, 200);
   }
 
+  /**
+   * Empty the input when user
+   * pressed the backspace key twice
+   */
+  inputDelete () {
+    this.deleteKey += 1;
+    if (this.deleteKey === config.BACKSPACE_DELETE) {
+      this.input.value = '';
+      this.deleteKey = 0;
+    }
+  }
+
+  /**
+   * Spawn next word
+   * gameSpeed is a time in milliseconds
+   * between words calculated by level
+   */
   nextWord () {
     const {level} = this;
     const gameSpeed = convertToRange(
@@ -159,32 +189,27 @@ export default class Game {
 
     const now = window.performance.now();
     if (now > (this.lastSpawn + gameSpeed)) {
-      if (!this.paused) {
-        this.spawnWord();
-        this.lastSpawn = window.performance.now();
-        console.log('Game speed:', gameSpeed, 'Level:', level);
-      }
+      this.spawnWord();
+      this.lastSpawn = window.performance.now();
     }
   }
 
-  pauseGame () {
-    this.app.ticker.stop();
-    this.paused = true;
-  }
-
-  addWord (word) {
-    this.words.push(word);
-    this.app.stage.addChild(word.getEntity());
-  }
-
+  /**
+   * Select random word from the list
+   * example - {tr: '愛', si: '爱', pin: ['ai4']},
+   * @returns {Object}
+   */
   getWordFromList () {
     const {level} = this;
     return _.sample(wordsList[level]);
   }
 
+  /**
+   * Creates new word
+   */
   spawnWord () {
     const {level} = this;
-    const word = this.getWordFromList();
+    const wordData = this.getWordFromList();
 
     const lifespan = convertToRange(
       this.level,
@@ -192,14 +217,17 @@ export default class Game {
       [config.WORD_MAX_LIFESPAN, config.WORD_MIN_LIFESPAN]
     );
 
-    const wordEntity = new Word(word, this.container, {
-      initOffsetTop: -200,
+    const word = new Word(wordData, this.container, {
       lifespan,
       score: level
     });
-    this.addWord(wordEntity);
+    this.words.push(word);
+    this.app.stage.addChild(word.getEntity());
   }
 
+  /**
+   * @param {Word} word
+   */
   destroyWord (word) {
     word.explode()
       .then(() => {
@@ -209,6 +237,9 @@ export default class Game {
       });
   }
 
+  /**
+   * @param {Word} word
+   */
   addScore (word) {
     this.score += word.getScore();
     this.scoreboard.update();
@@ -222,6 +253,9 @@ export default class Game {
     }
   }
 
+  /**
+   * @param {string} string
+   */
   guessWord (string) {
     if (string === '') return;
     const word = this.words.find((w) => w.guessed === false && w.guess(string.trim()));
@@ -229,6 +263,7 @@ export default class Game {
       this.destroyWord(word);
       this.addScore(word);
       this.input.value = '';
+      this.deleteKey = 0;
     } else {
       this.shakeAnimation();
     }
@@ -236,9 +271,5 @@ export default class Game {
 
   bindScoreboard (scoreboard) {
     this.scoreboard = scoreboard;
-  }
-
-  bindGameOverScreen (gameOverScren) {
-    this.gameOverScren = gameOverScren;
   }
 };

@@ -1,16 +1,22 @@
 import 'pixi.js';
 import config from '@/config.js';
-import anime from 'animejs';
 import _ from 'lodash';
 
 export default class Word {
-  constructor (word = {}, container, options = {}) {
+  /**
+   * Create a word
+   * @param {Object} word Object with Chinese and pinyin
+   * example - {tr: '愛', si: '爱', pin: ['ai4']},
+   * @param {DOMElement} container
+   * @param {Object} options {x, y, score, lifespan, initOffsetTop}
+   */
+  constructor (data = {}, container, options = {}) {
     this.guessed = false;
     this.spawnTime = window.performance.now();
     this.lifespan = options.lifespan || 10000;
     this.score = options.score || 1;
     this.container = container;
-    this.word = word;
+    this.data = data;
     this.style = {
       fontFamily: 'Helvetica, sans-serif',
       fontSize: '100px',
@@ -18,16 +24,19 @@ export default class Word {
     };
     // TODO: Support for simplified chinese
     const chineseType = 'tr';
-    this.text = new PIXI.Text(word[chineseType], this.style);
+    this.text = new PIXI.Text(data[chineseType], this.style);
     this.text.x = options.x || this.randomWordPosition();
     this.text.y = options.y || 0;
     this.text.anchor.x = 0.5;
     this.text.anchor.y = 0.5;
-    this.initOffsetTop = options.initOffsetTop || 0;
-    console.log('Word spawned:', this.word, 'Lifespan:', this.lifespan);
+    this.initOffsetTop = options.initOffsetTop || config.WORD_STARTING_OFFSET;
     this.update();
   }
 
+  /**
+   * Update the position of Word relative
+   * to its container height
+   */
   update () {
     const now = window.performance.now();
     const {text, container, initOffsetTop, spawnTime, lifespan} = this;
@@ -37,6 +46,10 @@ export default class Word {
     text.y = (container.innerHeight - initOffsetTop) * progress + initOffsetTop;
   }
 
+  /**
+   * Check whether Word is outside the container
+   * @returns {boolean}
+   */
   isOut (width, height) {
     const {spawnTime, lifespan} = this;
     const now = window.performance.now();
@@ -44,23 +57,40 @@ export default class Word {
     return ((now - spawnTime) > lifespan);
   }
 
+  /**
+   * Checks if input matches the Word's
+   * Chinese or pinyin
+   * @param {string} string
+   * @returns {boolean}
+   */
   guess (string) {
-    const isPin = this.word.pin.some(pin => {
+    const isPin = this.data.pin.some(pin => {
       return pin.replace(/ /g, '') === string.replace(/ /g, '');
     });
-    return string === this.word['tr'] ||
-           string === this.word['si'] ||
+    return string === this.data['tr'] ||
+           string === this.data['si'] ||
            isPin;
   }
 
+  /**
+   * @returns {PIXI.Text}
+   */
   getEntity () {
     return this.text;
   }
 
+  /**
+   * @returns {number}
+   */
   getScore () {
     return this.score;
   }
 
+  /**
+   * Generates random position
+   * offsetted from sides (so that the word is fully visible)
+   * @returns {number} X position
+   */
   randomWordPosition () {
     const {CONTAINER_WORDS_OFFSET} = config;
 
@@ -75,6 +105,9 @@ export default class Word {
     return position;
   }
 
+  /**
+   * This should be an exploding animation
+   */
   explode () {
     this.guessed = true;
     return new Promise((resolve, reject) => {
