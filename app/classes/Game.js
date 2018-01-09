@@ -136,7 +136,6 @@ export default class Game {
         const rgb1 = PIXI.utils.hex2rgb(0x000000);
         const rgb2 = PIXI.utils.hex2rgb(0x8B0000);
         const color = colorGradientHelper(rgb1, rgb2, gradientRatio);
-        console.log(color, gradientRatio);
         this.app.renderer.backgroundColor = PIXI.utils.rgb2hex(color);
       },
       complete: () => {
@@ -176,9 +175,8 @@ export default class Game {
    * between words calculated by level
    */
   nextWord () {
-    const {level} = this;
     const gameSpeed = convertToRange(
-      level,
+      this.level,
       [0, _.size(wordsList)],
       [config.WORD_MAX_SPAWN_SPEED, config.WORD_MIN_SPAWN_SPEED]
     );
@@ -200,15 +198,13 @@ export default class Game {
    * @returns {Object}
    */
   getWordFromList () {
-    const {level} = this;
-    return _.sample(wordsList[level]);
+    return _.sample(wordsList[this.level]);
   }
 
   /**
    * Creates new word
    */
   spawnWord () {
-    const {level} = this;
     const wordData = this.getWordFromList();
 
     const lifespan = convertToRange(
@@ -219,7 +215,7 @@ export default class Game {
 
     const word = new Word(wordData, this.container, {
       lifespan,
-      score: level
+      score: this.level
     });
     this.words.push(word);
     this.app.stage.addChild(word.getEntity());
