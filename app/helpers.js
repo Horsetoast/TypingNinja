@@ -1,17 +1,3 @@
-import _ from 'lodash';
-
-// export const colorGradientHelper = (color1, color2, ratio) => {
-//   var r = _.ceil(parseInt(color1.substring(0, 2), 16) * ratio + parseInt(color2.substring(0, 2), 16) * (1 - ratio));
-//   var g = _.ceil(parseInt(color1.substring(2, 4), 16) * ratio + parseInt(color2.substring(2, 4), 16) * (1 - ratio));
-//   var b = _.ceil(parseInt(color1.substring(4, 6), 16) * ratio + parseInt(color2.substring(4, 6), 16) * (1 - ratio));
-
-//   return rgbToHex(r) + rgbToHex(g) + rgbToHex(b);
-// };
-
-// export const rgbToHex = (x) => {
-//   x = x.toString(16);
-//   return (x.length == 1) ? '0' + x : x;
-// };
 
 export const colorGradientHelper = (rgb1, rgb2, ratio) => {
   var result = rgb1.slice();
@@ -23,7 +9,7 @@ export const colorGradientHelper = (rgb1, rgb2, ratio) => {
 
 export const rgbToHex = (x) => {
   x = x.toString(16);
-  return (x.length == 1) ? '0' + x : x;
+  return (x.length === 1) ? '0' + x : x;
 };
 
 export const convertToRange = (value, srcRange, dstRange) => {
@@ -37,5 +23,4 @@ export const convertToRange = (value, srcRange, dstRange) => {
   const adjValue = value - srcRange[0];
 
   return (adjValue * dstMax / srcMax) + dstRange[0];
-}
-;
+};
