@@ -12,7 +12,8 @@ const settings = {
   input: document.getElementById('words-input'),
   gameOverScreen: document.getElementById('game-over'),
   gameInit: document.getElementById('game-init'),
-  gameControls: document.getElementById('game-controls')
+  gameControls: document.getElementById('game-controls'),
+  mode: 'waiguoren'
 };
 
 const game = new Game(settings);

@@ -12,14 +12,15 @@ export default class Game {
    */
   constructor (settings = {}) {
     this.app = null;
+    this.mode = settings.mode;
     this.score = 0;
     this.level = 1;
-    this.lives = config.LIVES;
+    this.lives = config[this.mode].LIVES;
     this.gameOver = false;
     this.words = [];
     this.scoreboard = null;
     this.lastSpawn = null;
-    this.deleteKey = 0;
+    this.deletePressed = 0;
 
     /* HTML elements */
     this.gameWrapper = settings.gameWrapper;
@@ -35,20 +36,22 @@ export default class Game {
     });
 
     /* Attach listener to text input */
-    this.input.addEventListener('keyup', (e) => {
-      e.preventDefault();
+    this.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         this.guessWord(this.input.value);
       }
       if (e.key === 'Backspace') {
         this.inputDelete();
+      } else {
+        this.deletePressed = 0;
       }
     });
 
     /* Attach restart to controls */
     const ra = document.querySelectorAll('[data-control="restart"]');
     for (let el of ra) {
-      el.addEventListener('click', this.startNewGame.bind(this));
+      const mode = el.getAttribute('data-mode');
+      el.addEventListener('click', this.startNewGame.bind(this, mode));
     }
 
     /* Create PIXI Application and append canvas */
@@ -62,10 +65,11 @@ export default class Game {
    * Resets values, removes words from PIXI stage object,
    * start ticker and hide/show some HTML elements
    */
-  startNewGame () {
+  startNewGame (mode = 'normal') {
+    this.mode = mode;
     this.score = 0;
     this.level = 1;
-    this.lives = config.LIVES;
+    this.lives = config[this.mode].LIVES;
     this.gameOver = false;
     this.words = [];
     this.lastSpawn = null;
@@ -81,6 +85,7 @@ export default class Game {
     this.scoreboard.update();
 
     this.app.ticker.add(this.update.bind(this));
+    // this.onAssetsLoaded();
   }
 
   /**
@@ -162,10 +167,10 @@ export default class Game {
    * pressed the backspace key twice
    */
   inputDelete () {
-    this.deleteKey += 1;
-    if (this.deleteKey === config.BACKSPACE_DELETE) {
+    this.deletePressed += 1;
+    if (this.deletePressed === config.BACKSPACE_DELETE) {
       this.input.value = '';
-      this.deleteKey = 0;
+      this.deletePressed = 0;
     }
   }
 
@@ -178,7 +183,7 @@ export default class Game {
     const gameSpeed = convertToRange(
       this.level,
       [0, _.size(wordsList)],
-      [config.WORD_MAX_SPAWN_SPEED, config.WORD_MIN_SPAWN_SPEED]
+      [config[this.mode].WORD_MAX_SPAWN_SPEED, config[this.mode].WORD_MIN_SPAWN_SPEED]
     );
 
     if (this.lastSpawn == null) {
@@ -210,10 +215,10 @@ export default class Game {
     const lifespan = convertToRange(
       this.level,
       [0, _.size(wordsList)],
-      [config.WORD_MAX_LIFESPAN, config.WORD_MIN_LIFESPAN]
+      [config[this.mode].WORD_MAX_LIFESPAN, config[this.mode].WORD_MIN_LIFESPAN]
     );
 
-    const word = new Word(wordData, this.container, {
+    const word = new Word(wordData, this.app, this.container, {
       lifespan,
       score: this.level
     });
@@ -241,7 +246,7 @@ export default class Game {
     this.scoreboard.update();
     let nextLevel = 0;
     for (let i = 1; i <= this.level; i++) {
-      nextLevel += (i * config.WORDS_PER_LEVEL);
+      nextLevel += (i * config[this.mode].WORDS_PER_LEVEL);
     }
     const levelExists = !!wordsList[this.level + 1];
     if (this.score >= nextLevel && levelExists) {
@@ -259,7 +264,7 @@ export default class Game {
       this.destroyWord(word);
       this.addScore(word);
       this.input.value = '';
-      this.deleteKey = 0;
+      this.deletePressed = 0;
     } else {
       this.shakeAnimation();
     }

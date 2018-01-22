@@ -13,15 +13,24 @@ body,
     box-sizing: border-box; 
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background: #000;
+    p {
+        line-height: 1.5em;
+    }
 }
 
 .button {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
-    background: darkred;
     color: #fff;
     font-size: 24px;
+    margin: 0 8px;
+    &.green {
+        background: #1daf3d;
+    }
+    &.red {
+        background: #c70e0e;
+    }
 }
 
 .hidden {

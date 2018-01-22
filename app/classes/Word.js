@@ -1,27 +1,44 @@
 import 'pixi.js';
 import config from '@/config.js';
 import _ from 'lodash';
+import anime from 'animejs';
+import { colorGradientHelper, convertToRange } from '@/helpers.js';
+
+/* Create an array to store the textures */
+let explosionTextures = [];
+
+PIXI.loader
+.add('spritesheet', 'assets/sprites/mc.json')
+.load(() => {
+  for (let i = 0; i < 26; i++) {
+      var texture = PIXI.Texture.fromFrame('Explosion_Sequence_A ' + (i+1) + '.png');
+      explosionTextures.push(texture);
+  }
+});
 
 export default class Word {
   /**
    * Create a word
-   * @param {Object} word Object with Chinese and pinyin
+   * @param {Object} data Object with Chinese and pinyin
    * example - {tr: '愛', si: '爱', pin: ['ai4']},
+   * @param {Object} app PIXI App object
    * @param {DOMElement} container
    * @param {Object} options {x, y, score, lifespan, initOffsetTop}
    */
-  constructor (data = {}, container, options = {}) {
+  constructor (data = {}, app, container, options = {}) {
     this.guessed = false;
     this.spawnTime = window.performance.now();
     this.lifespan = options.lifespan || 10000;
     this.score = options.score || 1;
     this.container = container;
+    this.app = app;
     this.data = data;
     this.style = {
       fontFamily: 'Helvetica, sans-serif',
       fontSize: '100px',
-      fill: 'lightblue'
+      fill: 0xADD8E6
     };
+
     // TODO: Support for simplified chinese
     const chineseType = 'tr';
     this.text = new PIXI.Text(data[chineseType], this.style);
@@ -106,15 +123,41 @@ export default class Word {
   }
 
   /**
-   * This should be an exploding animation
+   * Marking word as guessed and exploding animation
    */
   explode () {
     this.guessed = true;
     return new Promise((resolve, reject) => {
-      this.text.style.fill = 'green';
-      setTimeout(() => {
-        resolve();
-      }, 300);
+      const ba = anime({
+        duration: 400,
+        loop: 1,
+        easing: 'easeInQuad',
+        update: (anim) => {
+          const gradientRatio = _.round(anim.progress / 100, 2);
+          const rgb1 = PIXI.utils.hex2rgb(0xADD8E6);
+          const rgb2 = PIXI.utils.hex2rgb(0xEAFF2A);
+          const color = colorGradientHelper(rgb1, rgb2, gradientRatio);
+          this.text.style.fill = PIXI.utils.rgb2hex(color);
+        },
+        complete: () => {
+          this.text.style.fill = PIXI.utils.rgb2hex(0x000000);
+          var explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
+
+          explosion.x = this.text.x;
+          explosion.y = this.text.y;
+          explosion.loop = false;
+          explosion.anchor.set(0.5);
+          explosion.rotation = Math.random() * Math.PI;
+          explosion.scale.set(0.75 + Math.random() * 0.5);
+          explosion.gotoAndPlay(1);
+          explosion.onComplete = () => {
+            this.app.stage.removeChild(explosion);
+            resolve();
+          };
+          this.app.stage.addChild(explosion);
+        }
+      });
     });
   }
+
 };
