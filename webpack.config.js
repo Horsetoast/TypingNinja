@@ -60,7 +60,11 @@ module.exports = {
           compact: true
         }
       },
-
+      // JSON
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
+      },
       // STYLES
       {
         test: /\.css$/,

@@ -7,12 +7,16 @@ import { colorGradientHelper, convertToRange } from '@/helpers.js';
 /* Create an array to store the textures */
 let explosionTextures = [];
 
-PIXI.loader
-.add('spritesheet', 'assets/sprites/mc.json')
-.load(() => {
+/* Load json and png texture for PIXI explosion animation */
+// TODO: Make this prettier, wrap it in a function
+const data = require('@/../assets/sprites/mc.json');
+const image = require('@/../assets/sprites/mc.png');
+const baseTexture = new PIXI.BaseTexture.from(image, null, 1);
+const spritesheet = new PIXI.Spritesheet(baseTexture, data);
+spritesheet.parse(function (textures) {
   for (let i = 0; i < 26; i++) {
-      var texture = PIXI.Texture.fromFrame('Explosion_Sequence_A ' + (i+1) + '.png');
-      explosionTextures.push(texture);
+    var texture = PIXI.Texture.fromFrame('Explosion_Sequence_A ' + (i+1) + '.png');
+    explosionTextures.push(texture);
   }
 });
 
