@@ -15,9 +15,9 @@ $ npm run dev
 - Add more words and levels
 - Add an option to regain lives
 - Show the list of missed words at the end of game
-- Add explosion animations for words. We need more explosions!
 - Support for simplified Chinese
 - It would be nice to create a backend with database so we can save user highscores
+- Create a countdown before the first word appears
 
 Contributions are more than welcome
 
