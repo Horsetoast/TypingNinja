@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "animejs": "^2.2.0",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.13",
     "pixi.js": "^4.6.2"
   },
   "devDependencies": {
